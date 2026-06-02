@@ -1,0 +1,522 @@
+/* ============================================
+   注文書発行システム - Google Workspace Style
+   ============================================ */
+
+:root {
+    --google-primary: #1a73e8;
+    --google-primary-hover: #1557b0;
+    --google-primary-light: #e8f0fe;
+    --google-bg: #f8f9fa;
+    --google-surface: #ffffff;
+    --google-text: #202124;
+    --google-text-sub: #5f6368;
+    --google-border: #dadce0;
+    --google-border-light: #e8eaed;
+    --google-danger: #d93025;
+    --google-success: #1e8e3e;
+    --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    --shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+    --radius: 12px;
+    --radius-lg: 16px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Noto Sans JP', 'Google Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--google-text);
+    background-color: var(--google-bg);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+    line-height: 1.6;
+}
+
+.form-container {
+    width: 100%;
+    background-color: transparent;
+}
+
+#form-view {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+#history-view {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 1100px;
+}
+
+/* ===== ヘッダー ===== */
+.app-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--google-text);
+    letter-spacing: 0.02em;
+}
+
+.app-header h1 svg {
+    stroke: var(--google-primary);
+}
+
+/* ===== カード ===== */
+.card.glass,
+.form-section.card.glass {
+    background: var(--google-surface);
+    border: 1px solid var(--google-border-light);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease;
+}
+
+.card.glass:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== セクションタイトル ===== */
+h2 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 24px;
+    color: var(--google-primary);
+    border-bottom: 1px solid var(--google-border-light);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.02em;
+}
+
+h2 svg {
+    stroke: var(--google-primary);
+}
+
+/* ===== フォーム ===== */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.address-group {
+    grid-column: span 2;
+}
+
+.auto-increment-btn-wrapper {
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--google-text-sub);
+    letter-spacing: 0.01em;
+}
+
+.required {
+    color: var(--google-danger);
+    margin-left: 2px;
+}
+
+/* ===== 入力フィールド ===== */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--google-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background-color: var(--google-surface);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color: var(--google-text);
+    outline: none;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--google-primary);
+    box-shadow: 0 0 0 2px var(--google-primary-light);
+}
+
+input[type="text"]:hover:not(:focus),
+input[type="number"]:hover:not(:focus),
+input[type="date"]:hover:not(:focus),
+select:hover:not(:focus),
+textarea:hover:not(:focus) {
+    border-color: var(--google-text-sub);
+}
+
+/* ===== セレクト ===== */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+select:focus {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a73e8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='18 15 12 9 6 15'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+select option {
+    background-color: var(--google-surface);
+    color: var(--google-text);
+    font-size: 0.95rem;
+    padding: 12px;
+}
+
+/* ===== オートコンプリートドロップダウン ===== */
+.form-group,
+.address-group {
+    position: relative;
+}
+
+.custom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--google-surface);
+    border: 1px solid var(--google-border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 1000;
+    max-height: 220px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+    box-shadow: var(--shadow-md);
+}
+
+.custom-dropdown.active {
+    display: block;
+}
+
+.custom-dropdown li {
+    padding: 10px 14px;
+    cursor: pointer;
+    color: var(--google-text);
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--google-border-light);
+    transition: background-color 0.15s ease;
+}
+
+.custom-dropdown li:last-child {
+    border-bottom: none;
+}
+
+.custom-dropdown li:hover {
+    background-color: var(--google-primary-light);
+    color: var(--google-primary);
+}
+
+/* ===== readonly ===== */
+input[readonly] {
+    background-color: var(--google-bg);
+    color: var(--google-text-sub);
+    cursor: not-allowed;
+    border-color: var(--google-border-light);
+}
+
+/* ===== ボタン ===== */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn.primary {
+    width: 100%;
+    background-color: var(--google-surface);
+    color: var(--google-primary);
+    border: 1px solid var(--google-border);
+}
+
+.btn.primary:hover {
+    background-color: var(--google-primary-light);
+    border-color: var(--google-primary);
+}
+
+.btn:disabled {
+    background-color: var(--google-bg);
+    border-color: var(--google-border-light);
+    color: var(--google-text-sub);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ===== 送信ボタン ===== */
+.submit-btn {
+    width: 100%;
+    background-color: var(--google-primary);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 14px;
+    margin-top: 12px;
+    border: none;
+    border-radius: var(--radius);
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-sm);
+}
+
+.submit-btn:hover {
+    background-color: var(--google-primary-hover);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== 金額プレビュー ===== */
+.price-preview {
+    background: var(--google-primary-light) !important;
+    border: 1px solid var(--google-border) !important;
+    border-radius: 8px !important;
+    padding: 14px !important;
+}
+
+.price-preview span[style*="color: #888888"] {
+    color: var(--google-text-sub) !important;
+}
+
+/* ===== タブ ===== */
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto 32px auto;
+    max-width: 720px;
+    border-bottom: 2px solid var(--google-border-light);
+    transition: max-width 0.3s ease;
+}
+
+.tabs.wide {
+    max-width: 1100px;
+}
+
+.tab-btn {
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 28px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--google-text-sub);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.tab-btn:hover {
+    color: var(--google-primary);
+    background-color: var(--google-primary-light);
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn.active {
+    color: var(--google-primary);
+    border-bottom: 3px solid var(--google-primary);
+}
+
+/* ===== フィルタータブ ===== */
+.sub-filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    background-color: transparent;
+    border: 1px solid var(--google-border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--google-text-sub);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--google-primary);
+    color: var(--google-primary);
+    background-color: var(--google-primary-light);
+}
+
+.filter-btn.active {
+    background-color: var(--google-primary);
+    border-color: var(--google-primary);
+    color: #ffffff;
+}
+
+/* ===== 履歴テーブル ===== */
+.history-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.history-table th,
+.history-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--google-border-light);
+    color: var(--google-text);
+}
+
+.history-table td {
+    white-space: nowrap;
+}
+
+.history-table th {
+    font-weight: 500;
+    font-size: 0.8rem;
+    color: var(--google-text-sub);
+    border-bottom: 2px solid var(--google-border);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.history-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.history-table tbody tr:hover {
+    background-color: var(--google-primary-light);
+}
+
+/* ===== リンクボタン ===== */
+.link-btn {
+    display: inline-block;
+    padding: 4px 12px;
+    border: 1px solid var(--google-border);
+    border-radius: 6px;
+    color: var(--google-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.link-btn:hover {
+    background-color: var(--google-primary);
+    color: #ffffff;
+    border-color: var(--google-primary);
+}
+
+/* ===== ローディング ===== */
+.loading-text {
+    text-align: center;
+    padding: 40px;
+    color: var(--google-text-sub);
+}
+
+/* ===== 日付入力 ===== */
+input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+}
+
+/* ===== 金額入力 ===== */
+#project-price {
+    color: var(--google-text);
+}
+
+#project-price:focus {
+    color: var(--google-text);
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 16px 12px;
+    }
+
+    .card.glass {
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        padding: 10px 12px;
+        font-size: 16px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .address-group {
+        grid-column: span 1;
+    }
+
+    .sub-filter-tabs {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .filter-btn {
+        flex: 1 1 calc(50% - 6px);
+        text-align: center;
+        padding: 8px;
+    }
+}
