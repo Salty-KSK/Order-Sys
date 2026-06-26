@@ -263,7 +263,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentSequenceData = null;
     let vendorList = [];
 
-    // マスター取得
+    // === Supabase 業者マスター取得 ===
+    let supabaseVendors = [];
+    try {
+        const { data: sv } = await supabaseClient.from('vendors').select('id, name, kana, industry, postal_code, address, tel').order('kana', { ascending: true });
+        if (sv && sv.length > 0) {
+            supabaseVendors = sv.map(v => ({
+                name: v.name,
+                code: '',
+                zip: v.postal_code || '',
+                address: v.address || '',
+                tel: v.tel || '',
+                source: 'supabase'
+            }));
+        }
+    } catch (e) {
+        console.warn('Supabase業者マスター取得エラー:', e);
+    }
+
+    // マスター取得（GAS）
     try {
         if (!GAS_WEBAPP_URL.includes('ここに')) {
             const vendorUrl = `${GAS_WEBAPP_URL}?mode=get_vendors`;
@@ -272,51 +290,57 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const vData = await vRes.json();
                 if (vData.vendors && vData.vendors.length > 0) {
                     vendorList = vData.vendors;
-                    vendorSelect.placeholder = '業者を選択または手入力';
-                    codeInput.placeholder = '記号を選択または入力';
-
-                    const vendorDropdown = document.getElementById('custom-vendor-list');
-                    const codeDatalist = document.getElementById('code-list');
-
-                    if (codeDatalist) {
-                        codeDatalist.innerHTML = '';
-                        // 会社記号の重複を排除し、AとTをデフォルト追加
-                        const uniqueCodes = [...new Set(vendorList.map(v => v.code).filter(c => c))];
-                        if (!uniqueCodes.includes('A')) uniqueCodes.push('A');
-                        if (!uniqueCodes.includes('T')) uniqueCodes.push('T');
-
-                        uniqueCodes.sort().forEach(code => {
-                            const opt = document.createElement('option');
-                            opt.value = code;
-                            codeDatalist.appendChild(opt);
-                        });
-                    }
-
-                    // ベンダーデータの整形とドロップダウン登録
-                    const vendorDropdownData = vendorList.map(v => ({
-                        dropdownText: v.name,
-                        value: v.name,
-                        raw: v
-                    }));
-
-                    renderCustomDropdown(vendorSelect, vendorDropdown, vendorDropdownData, (selectedItem) => {
-                        const vendor = selectedItem.raw;
-                        codeInput.value = vendor.code || '';
-                        zipCodeInput.value = vendor.zip || '';
-                        addressInput.value = vendor.address || '';
-                    });
-
-                } else {
-                    vendorSelect.placeholder = '(業者データが台帳にありません)';
-                    codeInput.placeholder = '(データなし)';
                 }
             }
-        } else {
-            vendorSelect.placeholder = '(バックエンド更新待機中)';
-            codeInput.placeholder = '(更新待機中)';
         }
     } catch (e) {
-        console.error("Vendor fetch failed:", e);
+        console.error("GAS Vendor fetch failed:", e);
+    }
+
+    // GAS候補とSupabase候補をマージ（重複は名前で排除）
+    const gasNames = new Set(vendorList.map(v => v.name));
+    supabaseVendors.forEach(sv => {
+        if (!gasNames.has(sv.name)) {
+            vendorList.push(sv);
+        }
+    });
+
+    // ドロップダウンに表示
+    if (vendorList.length > 0) {
+        vendorSelect.placeholder = '業者を選択または手入力';
+        codeInput.placeholder = '記号を選択または入力';
+
+        const vendorDropdown = document.getElementById('custom-vendor-list');
+        const codeDatalist = document.getElementById('code-list');
+
+        if (codeDatalist) {
+            codeDatalist.innerHTML = '';
+            const uniqueCodes = [...new Set(vendorList.map(v => v.code).filter(c => c))];
+            if (!uniqueCodes.includes('A')) uniqueCodes.push('A');
+            if (!uniqueCodes.includes('T')) uniqueCodes.push('T');
+
+            uniqueCodes.sort().forEach(code => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                codeDatalist.appendChild(opt);
+            });
+        }
+
+        const vendorDropdownData = vendorList.map(v => ({
+            dropdownText: v.name,
+            value: v.name,
+            raw: v
+        }));
+
+        renderCustomDropdown(vendorSelect, vendorDropdown, vendorDropdownData, (selectedItem) => {
+            const vendor = selectedItem.raw;
+            codeInput.value = vendor.code || '';
+            zipCodeInput.value = vendor.zip || '';
+            addressInput.value = vendor.address || '';
+        });
+    } else {
+        vendorSelect.placeholder = '(業者データがありません)';
+        codeInput.placeholder = '(データなし)';
     }
 
     // === Phase 13: SPA Tabs & History Logic ===
