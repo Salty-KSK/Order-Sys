@@ -46,6 +46,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // === 予算管理プロジェクト一覧取得 ===
     const linkedProjectSelect = document.getElementById('linked-project');
+    const orderRequestGroup = document.getElementById('order-request-group');
+    const orderRequestSelect = document.getElementById('linked-order-request');
+    let currentOrderRequests = []; // 選択中プロジェクトの発注申請一覧
+
     try {
         const { data: projects } = await supabaseClient.from('projects').select('id, site_name').order('created_at', { ascending: false });
         if (projects && projects.length > 0) {
@@ -59,6 +63,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.warn('予算管理プロジェクトの取得に失敗:', e);
     }
+
+    // プロジェクト選択時: 発注申請一覧を取得
+    linkedProjectSelect.addEventListener('change', async function() {
+        const projectId = this.value;
+        // セレクトをリセット
+        orderRequestSelect.innerHTML = '<option value="">-- 選択してください --</option>';
+        currentOrderRequests = [];
+
+        if (!projectId) {
+            orderRequestGroup.style.display = 'none';
+            return;
+        }
+
+        try {
+            // budget_items と order_requests を取得
+            const [budgetRes, orderRes] = await Promise.all([
+                supabaseClient.from('budget_items').select('id, name, category').eq('project_id', projectId),
+                supabaseClient.from('order_requests').select('*').eq('project_id', projectId).eq('status', 'draft').order('request_number', { ascending: true }),
+            ]);
+
+            const budgetItems = budgetRes.data || [];
+            const orderReqs = orderRes.data || [];
+            currentOrderRequests = orderReqs;
+
+            if (orderReqs.length > 0) {
+                orderReqs.forEach(req => {
+                    const budget = budgetItems.find(b => b.id === req.budget_item_id);
+                    const opt = document.createElement('option');
+                    opt.value = req.id;
+                    const label = `${req.request_number} — ${req.company_name || '(未設定)'} ¥${Number(req.amount).toLocaleString()} [${budget ? budget.name : ''}]`;
+                    opt.textContent = label;
+                    orderRequestSelect.appendChild(opt);
+                });
+                orderRequestGroup.style.display = 'block';
+            } else {
+                orderRequestGroup.style.display = 'none';
+            }
+        } catch (e) {
+            console.warn('発注申請データの取得に失敗:', e);
+            orderRequestGroup.style.display = 'none';
+        }
+    });
+
+    // 発注申請選択時: フォームに自動入力
+    orderRequestSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        if (!selectedId) return;
+
+        const req = currentOrderRequests.find(r => r.id === selectedId);
+        if (!req) return;
+
+        // 科目を設定
+        const categoryMap = { A: 'materials', C: 'construction', D: 'expenses', E: 'temporary' };
+        const category = categoryMap[req.category_code] || 'construction';
+        const budgetCatEl = document.getElementById('budget-category');
+        if (budgetCatEl) budgetCatEl.value = category;
+
+        // 宛名（会社名）を設定
+        const companyNameEl = document.getElementById('company-name');
+        if (companyNameEl && req.company_name) companyNameEl.value = req.company_name;
+
+        // 発注内容を設定
+        const orderContentEl = document.getElementById('order-content');
+        if (orderContentEl && req.description) orderContentEl.value = req.description;
+
+        // 工事代金を設定
+        const projectPriceEl = document.getElementById('project-price');
+        if (projectPriceEl && req.amount) {
+            projectPriceEl.value = Number(req.amount).toLocaleString();
+            projectPriceEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
 
     // オートコンプリートUI管理関数
     function renderCustomDropdown(inputEl, dropdownEl, dataArray, onSelectCallback) {
@@ -500,6 +576,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log('予算管理連携: linked_orders に保存成功');
                 } catch (e) {
                     console.warn('予算管理連携エラー:', e);
+                }
+
+                // === 発注申請のステータスを「注文書発行済」に更新 ===
+                const selectedOrderRequestId = document.getElementById('linked-order-request').value;
+                if (selectedOrderRequestId) {
+                    try {
+                        await supabaseClient.from('order_requests').update({
+                            status: 'ordered',
+                            gas_order_number: finalOrderNum,
+                            order_date: formData.get('issue-date'),
+                            updated_at: new Date().toISOString()
+                        }).eq('id', selectedOrderRequestId);
+                        console.log('予算管理連携: 発注申請ステータスを更新');
+                    } catch (e) {
+                        console.warn('発注申請ステータス更新エラー:', e);
+                    }
                 }
             }
 
