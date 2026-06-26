@@ -101,9 +101,9 @@
 
                         <div class="form-group" style="position: relative;">
                             <label for="company-name">宛名（会社名） <span class="required">*</span></label>
-                            <!-- type="text" に変更し、カスタムドロップダウン制御のため autocomplete="off" を設定 -->
-                            <input type="text" id="company-name" name="company-name" class="form-input"
-                                autocomplete="off" placeholder="業者名を選択または手入力" required>
+                            <!-- type="text" に変更し、カスタムドロップダウン制御のため Chromeのautofill無効化 -->
+                            <input type="text" id="company-name" name="vendor_selector_x" class="form-input"
+                                autocomplete="nope" placeholder="業者名を選択または手入力" required>
                             <ul id="custom-vendor-list" class="custom-dropdown" style="display: none;"></ul>
                         </div>
 
