@@ -51,12 +51,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentOrderRequests = []; // 選択中プロジェクトの発注申請一覧
 
     try {
-        const { data: projects } = await supabaseClient.from('projects').select('id, site_name').order('created_at', { ascending: false });
+        const { data: projects } = await supabaseClient.from('projects').select('id, site_name, address').order('created_at', { ascending: false });
         if (projects && projects.length > 0) {
             projects.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
                 opt.textContent = p.site_name;
+                opt.dataset.address = p.address || '';
+                opt.dataset.siteName = p.site_name || '';
                 linkedProjectSelect.appendChild(opt);
             });
         }
@@ -64,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('予算管理プロジェクトの取得に失敗:', e);
     }
 
-    // プロジェクト選択時: 発注申請一覧を取得
+    // プロジェクト選択時: 工事名・工事場所を自動入力 + 発注申請一覧を取得
     linkedProjectSelect.addEventListener('change', async function() {
         const projectId = this.value;
         // セレクトをリセット
@@ -74,6 +76,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!projectId) {
             orderRequestGroup.style.display = 'none';
             return;
+        }
+
+        // 工事名・工事場所を自動入力
+        const selectedOption = this.options[this.selectedIndex];
+        const projectNameEl = document.getElementById('project-name');
+        const projectLocationEl = document.getElementById('project-location');
+        if (projectNameEl && selectedOption.dataset.siteName) {
+            projectNameEl.value = selectedOption.dataset.siteName;
+        }
+        if (projectLocationEl && selectedOption.dataset.address) {
+            projectLocationEl.value = selectedOption.dataset.address;
         }
 
         try {
