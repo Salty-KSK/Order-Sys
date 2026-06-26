@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sv && sv.length > 0) {
             supabaseVendors = sv.map(v => ({
                 name: v.name,
+                kana: v.kana || '',
                 code: '',
                 zip: v.postal_code || '',
                 address: v.address || '',
@@ -303,6 +304,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!gasNames.has(sv.name)) {
             vendorList.push(sv);
         }
+    });
+
+    // あいうえお順にソート（kana優先、なければnameでフォールバック）
+    vendorList.sort((a, b) => {
+        const kanaA = a.kana || a.name || '';
+        const kanaB = b.kana || b.name || '';
+        return kanaA.localeCompare(kanaB, 'ja');
     });
 
     // ドロップダウンに表示
