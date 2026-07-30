@@ -609,6 +609,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const budgetCategory = document.getElementById('budget-category').value;
             if (linkedProjectId) {
                 try {
+                    // 既存の同一注文書番号レコードを削除（再発行対応）
+                    await supabaseClient.from('linked_orders')
+                        .delete()
+                        .eq('order_number', finalOrderNum);
+
+                    // 新しいデータをINSERT
                     await supabaseClient.from('linked_orders').insert({
                         project_id: linkedProjectId,
                         order_number: finalOrderNum,
@@ -618,7 +624,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         amount: isNaN(rawPrice) ? 0 : rawPrice,
                         order_date: formData.get('issue-date')
                     });
-                    console.log('予算管理連携: linked_orders に保存成功');
+                    console.log('予算管理連携: linked_orders に保存/更新成功');
                 } catch (e) {
                     console.warn('予算管理連携エラー:', e);
                 }
