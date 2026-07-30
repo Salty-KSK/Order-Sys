@@ -361,6 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const historyLoading = document.getElementById('history-loading');
     const tabsContainer = document.querySelector('.tabs');
     let historyLoaded = false;
+    let editingOrder = null; // 編集中の注文書データ { ssId, ssUrl, orderNumber }
 
     tabCreate.addEventListener('click', () => {
         tabCreate.classList.add('active');
@@ -368,6 +369,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         formView.style.display = 'block';
         historyView.style.display = 'none';
         tabsContainer.classList.remove('wide');
+        // 編集モードをリセット
+        if (editingOrder) {
+            cancelEdit();
+        }
     });
 
     tabHistory.addEventListener('click', () => {
@@ -408,7 +413,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 data.history.forEach(row => {
                     const tr = document.createElement('tr');
 
+                    // 編集ボタン + リンク
                     let linksHTML = '';
+                    if (row.ssUrl) {
+                        const ssIdMatch = row.ssUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        const ssId = ssIdMatch ? ssIdMatch[1] : '';
+                        linksHTML += `<button class="link-btn edit-order-btn" data-ss-id="${ssId}" data-ss-url="${row.ssUrl}" data-order-number="${row.orderNumber || ''}" style="background:#2563EB;color:#fff;border:none;cursor:pointer;margin-right:6px;">✏️ 編集</button>`;
+                    }
                     if (row.pdfUrl) linksHTML += `<a href="${row.pdfUrl}" target="_blank" class="link-btn">PDFを閲覧</a> `;
                     if (row.ssUrl) linksHTML += `<a href="${row.ssUrl}" target="_blank" class="link-btn" style="color: #888888; border-color: #e5e5e5; margin-left:8px;">台帳を開く</a>`;
 
@@ -428,6 +439,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `;
                     historyTbody.appendChild(tr);
                 });
+
+                // 編集ボタンのイベントリスナー
+                document.querySelectorAll('.edit-order-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        loadOrderForEdit(btn.dataset.ssId, btn.dataset.ssUrl, btn.dataset.orderNumber);
+                    });
+                });
             } else {
                 historyTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#888;">履歴データがありません。注文書を発行するとここに表示されます。</td></tr>';
             }
@@ -439,6 +457,98 @@ document.addEventListener('DOMContentLoaded', async () => {
             historyLoading.style.display = 'none';
             historyTableWrapper.style.display = 'block';
         }
+    }
+
+    // === 注文書の編集モード ===
+    async function loadOrderForEdit(ssId, ssUrl, orderNumber) {
+        if (!ssId) { alert('スプレッドシートIDが取得できません'); return; }
+
+        try {
+            // GASからスプレッドシートのデータを読み込み
+            const res = await fetch(`${GAS_WEBAPP_URL}?mode=get_order_detail&ssId=${encodeURIComponent(ssId)}`);
+            if (!res.ok) throw new Error('データ取得失敗');
+            const result = await res.json();
+            if (!result.success) throw new Error(result.error || 'データ取得エラー');
+
+            const d = result.data;
+
+            // フォームにデータを設定
+            document.getElementById('order-number').value = d.orderNumber || orderNumber;
+            document.getElementById('issue-date').value = d.issueDateISO || '';
+            document.getElementById('company-name').value = d.companyName || '';
+            document.getElementById('zip-code').value = (d.zipCode || '').replace('〒', '');
+            document.getElementById('address').value = d.address || '';
+            document.getElementById('quote-number').value = d.quoteNumber || '';
+            document.getElementById('quote-date').value = d.quoteDateISO || '';
+            document.getElementById('project-name').value = d.projectName || '';
+            document.getElementById('project-location').value = d.projectLocation || '';
+            document.getElementById('project-price').value = d.priceBase ? Number(d.priceBase).toLocaleString() : '';
+            document.getElementById('project-start').value = d.projectStartISO || '';
+            document.getElementById('project-end').value = d.projectEndISO || '';
+            document.getElementById('order-content').value = d.orderContent || '';
+
+            // 金額プレビューを更新
+            const priceInput = document.getElementById('project-price');
+            if (priceInput) priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // 注文書番号から期とコードを抽出
+            const numMatch = (d.orderNumber || orderNumber).match(/(\d+)(\w+)-(\d+)/);
+            if (numMatch) {
+                termInput.value = numMatch[1];
+                codeInput.value = numMatch[2];
+                // sequenceDataを疑似的に設定（更新時は採番不要）
+                currentSequenceData = { orderNumber: d.orderNumber || orderNumber };
+            }
+
+            // 編集モードに切り替え
+            editingOrder = { ssId, ssUrl, orderNumber: d.orderNumber || orderNumber };
+            submitBtn.textContent = '📝 更新 & PDF再発行';
+            submitBtn.style.backgroundColor = '#D97706';
+
+            // 編集モード表示バナー
+            let banner = document.getElementById('edit-mode-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'edit-mode-banner';
+                banner.style.cssText = 'background:#FEF3C7;border:1px solid #D97706;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;';
+                form.parentNode.insertBefore(banner, form);
+            }
+            banner.innerHTML = `<span>📝 <strong>編集モード</strong>：${d.orderNumber || orderNumber} を修正中</span><button id="btn-cancel-edit" style="background:#DC2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">✕ 編集をキャンセル</button>`;
+            banner.style.display = 'flex';
+            document.getElementById('btn-cancel-edit').addEventListener('click', cancelEdit);
+
+            // 採番ボタンを非表示（既存番号を使う）
+            generateBtn.style.display = 'none';
+            document.getElementById('order-number').removeAttribute('readonly');
+
+            // 新規発行タブに切り替え
+            tabCreate.click();
+
+        } catch (e) {
+            console.error('編集データ読み込みエラー:', e);
+            alert('注文書データの読み込みに失敗しました: ' + e.message);
+        }
+    }
+
+    function cancelEdit() {
+        editingOrder = null;
+        submitBtn.textContent = 'データ保存 ＆ 注文書（PDF）を発行';
+        submitBtn.style.backgroundColor = '';
+
+        const banner = document.getElementById('edit-mode-banner');
+        if (banner) banner.style.display = 'none';
+
+        generateBtn.style.display = '';
+        document.getElementById('order-number').setAttribute('readonly', 'readonly');
+
+        // フォームリセット
+        form.reset();
+        currentSequenceData = null;
+        orderNumberInput.value = '';
+
+        // 期を復元
+        const savedTerm = localStorage.getItem('companyTerm');
+        if (savedTerm) termInput.value = savedTerm;
     }
 
     termInput.addEventListener('change', () => {
@@ -498,14 +608,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (!orderNumberInput.value || !currentSequenceData) {
+        if (!editingOrder && (!orderNumberInput.value || !currentSequenceData)) {
             alert('保存前に「自動採番する」ボタンを押してください。');
             generateBtn.focus();
             return;
         }
 
         const originalBtnText = submitBtn.textContent;
-        submitBtn.textContent = '注文書ファイル自動生成中（約10秒かかります）...';
+        submitBtn.textContent = editingOrder ? '注文書更新中...' : '注文書ファイル自動生成中（約10秒かかります）...';
         submitBtn.disabled = true;
 
         try {
@@ -575,7 +685,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updates.push({ cell: CELL_CONFIG.orderContent, value: formData.get('order-content') });
 
             const payload = {
-                mode: 'create_order',
+                mode: editingOrder ? 'update_order' : 'create_order',
                 sequenceData: currentSequenceData,
                 companyName: formData.get('company-name').trim(),
                 projectName: formData.get('project-name').trim(),
@@ -585,6 +695,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 address: formData.get('address').trim(),
                 cellUpdates: updates // ここで構成情報をGASに送信
             };
+
+            // 編集モード時はスプレッドシートIDを追加
+            if (editingOrder) {
+                payload.ssId = editingOrder.ssId;
+            }
 
             // === 手入力された「発注内容」の自動学習（LocalStorageに保存） ===
             const finalOrderContent = payload.orderContent;
@@ -602,7 +717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(payload)
             });
 
-            alert('🎉 新しい注文書の実体ファイル（スプレッドシートおよびPDF）を作成しました！（ドライブをご確認ください）');
+            alert(editingOrder ? '✅ 注文書を更新しました！' : '🎉 新しい注文書の実体ファイル（スプレッドシートおよびPDF）を作成しました！（ドライブをご確認ください）');
 
             // === 予算管理システム連携: linked_orders に保存 ===
             const linkedProjectId = document.getElementById('linked-project').value;
@@ -644,6 +759,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.warn('発注申請ステータス更新エラー:', e);
                     }
                 }
+            }
+
+            // 編集モードをリセット
+            if (editingOrder) {
+                cancelEdit();
             }
 
             // 履歴データを古くして次回タブ切り替え時に再読み込みさせる
